@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>USMLE Vocabulary — Learn New Words</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg:#f5f7fb; --card:#ffffff; --text:#182033; --muted:#687287;
+  --border:#dfe4ee; --accent:#315efb; --accent-bg:#eef2ff;
+  --good:#18794e; --bad:#b42318; --priority:#6b4eff;
+}
+@media (prefers-color-scheme:dark) {
+  :root { --bg:#11151d; --card:#1a202b; --text:#eef2f7; --muted:#aab3c2;
+  --border:#303949; --accent:#8ea7ff; --accent-bg:#222b46; --priority:#b6a8ff; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+main{max-width:980px;margin:0 auto;padding:28px 18px 60px}
+h1{font-size:clamp(28px,4vw,40px);margin:0 0 8px}
+h2{margin:0 0 8px}
+.sub{color:var(--muted);line-height:1.5}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;margin-top:16px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat{text-align:center;border:1px solid var(--border);border-radius:14px;padding:12px 8px}
+.stat b{display:block;font-size:21px} .stat span{font-size:12px;color:var(--muted)}
+button,input{font:inherit}
+button{border:1px solid var(--border);border-radius:12px;padding:11px 13px;background:var(--card);color:var(--text);cursor:pointer}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+button.selected{outline:2px solid var(--accent);background:var(--accent-bg)}
+button.correct{border-color:var(--good);opacity:.58}
+button.wrong{border-color:var(--bad)}
+.nav{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}
+.nav button{padding:8px 10px;font-size:13px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.col{display:flex;flex-direction:column;gap:8px}
+.item{text-align:left;min-height:54px;line-height:1.25}
+.priority::after{content:" •";color:var(--priority);font-weight:800}
+.prompt{font-size:22px;font-weight:650;line-height:1.35;margin:16px 0}
+.options{display:grid;gap:8px}
+.inputrow{display:flex;gap:8px;flex-wrap:wrap}
+.inputrow input{flex:1;min-width:220px;border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--card);color:var(--text)}
+.status{margin-top:12px;color:var(--muted);line-height:1.4}
+.badtext{color:var(--bad)} .goodtext{color:var(--good)}
+.tag{display:inline-block;font-size:12px;color:var(--priority);margin-left:6px}
+@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Learn the new words</h1>
+  <p class="sub">Priority vocabulary comes from the screenshot. Screenshot words appear in every stage and are repeated more often; the additional recent terms are used as reinforcement.</p>
+
+  <section class="panel">
+    <div class="stats">
+      <div class="stat"><b id="stageStat">1/6</b><span>stage</span></div>
+      <div class="stat"><b id="correctStat">0</b><span>correct</span></div>
+      <div class="stat"><b id="priorityStat">0/17</b><span>screenshot words mastered</span></div>
+      <div class="stat"><b id="allStat">0/26</b><span>all words mastered</span></div>
+    </div>
+    <div class="nav" id="nav"></div>
+  </section>
+
+  <section class="panel" id="app"></section>
+</main>
+
+<script>
+"use strict";
+const CARDS=[{"en": "carry", "ru": "нести; переносить; проводить; быть носителем", "def": "To transport, transmit, or contain something.", "clue": "Sensory fibers can ____ information from the hand to the CNS.", "priority": true}, {"en": "noticeable", "ru": "заметный; ощутимый", "def": "Easy enough to see, feel, or recognize.", "clue": "There was a clearly visible improvement in muscle strength.", "priority": true}, {"en": "preserved", "ru": "сохранённый; не нарушенный", "def": "Remaining intact or not lost.", "clue": "Sensation remains normal despite weakness.", "priority": true}, {"en": "along with", "ru": "вместе с; наряду с", "def": "Together with another finding or event.", "clue": "The patient developed weakness together with sensory loss.", "priority": true}, {"en": "due to", "ru": "из-за; вследствие; обусловленный", "def": "Caused by or resulting from something.", "clue": "The weakness occurred because of peripheral nerve injury.", "priority": true}, {"en": "obvious", "ru": "очевидный; явный; легко заметный", "def": "Very clear and easy to notice.", "clue": "The deformity is immediately apparent on inspection.", "priority": true}, {"en": "faint", "ru": "слабый; едва заметный; бледный", "def": "Weak, slight, or barely perceptible.", "clue": "Only a very weak pulse is palpable at the wrist.", "priority": true}, {"en": "extended period of time", "ru": "продолжительный период времени; длительное время", "def": "A long duration rather than a brief interval.", "clue": "Chronic compression continues for a long duration.", "priority": true}, {"en": "though", "ru": "хотя; несмотря на то что; однако", "def": "Used to introduce a contrast.", "clue": "____ the patient has weakness, sensation is preserved.", "priority": true}, {"en": "particularly", "ru": "особенно; в особенности", "def": "Especially or to a greater degree than usual.", "clue": "Weakness is most noticeable during wrist extension.", "priority": true}, {"en": "startle", "ru": "вздрагивать; испугать", "def": "To react suddenly to an unexpected stimulus.", "clue": "The infant suddenly reacts to a loud sound.", "priority": true}, {"en": "the rest of", "ru": "остальная часть; остальные", "def": "Everything or everyone remaining.", "clue": "Sensation is intact in all remaining areas of the hand.", "priority": true}, {"en": "prominent", "ru": "выраженный; заметный; выступающий", "def": "Standing out clearly or being especially noticeable.", "clue": "The patient has clearly visible wasting of the hand muscles.", "priority": true}, {"en": "pronounced / marked / prominent / noticeable", "ru": "выраженный / значительный / заметный", "def": "A group of words used to describe a clearly evident finding.", "clue": "Choose a group of adjectives meaning clearly evident or significant.", "priority": true}, {"en": "grasp reflex", "ru": "хватательный рефлекс", "def": "An infant reflex in which the fingers close around an object touching the palm.", "clue": "The newborn closes the fingers when the palm is touched.", "priority": true}, {"en": "capillary refill", "ru": "капиллярное наполнение", "def": "Return of skin color after brief pressure is released.", "clue": "Color returns to the nail bed in less than 2 seconds.", "priority": true}, {"en": "subtle", "ru": "слабо выраженный; едва заметный; неочевидный", "def": "Present but difficult to notice.", "clue": "The weakness is present but only slightly apparent on examination.", "priority": true}, {"en": "humeral shaft", "ru": "диафиз плечевой кости", "def": "The long central portion of the humerus.", "clue": "Radiography shows a fracture in the middle portion of the humerus.", "priority": false}, {"en": "clawing", "ru": "когтеобразная деформация", "def": "A claw-like deformity of the fingers.", "clue": "The fourth and fifth fingers are held in a claw-like posture.", "priority": false}, {"en": "dystocia", "ru": "дистоция; затруднённые роды", "def": "Abnormally difficult labor or delivery.", "clue": "Delivery is complicated by difficulty delivering the shoulders.", "priority": false}, {"en": "cord", "ru": "канатик; тяж; шнур", "def": "A cord-like anatomical structure.", "clue": "Compression of the spinal ____ may cause weakness and sensory loss.", "priority": false}, {"en": "nerve cord", "ru": "нервный тяж / нервный ствол", "def": "A cord-like bundle of nerve tissue.", "clue": "The lesion involves a cord-like bundle of nerve fibers.", "priority": false}, {"en": "glenohumeral", "ru": "относящийся к плечевому суставу", "def": "Relating to the joint between the glenoid and humerus.", "clue": "The patient has limited motion in the shoulder joint itself.", "priority": false}, {"en": "volar surface", "ru": "ладонная поверхность", "def": "The palm-side surface of the hand or wrist.", "clue": "The laceration is on the palm-side of the wrist.", "priority": false}, {"en": "sunken", "ru": "запавший; впалый", "def": "Appearing hollowed or depressed.", "clue": "The thenar eminence appears depressed due to muscle loss.", "priority": false}, {"en": "wasting", "ru": "атрофия; уменьшение объёма ткани, особенно мышц", "def": "Loss of muscle bulk or tissue mass.", "clue": "There is visible loss of intrinsic hand muscle bulk.", "priority": false}];
+const PRIORITY=CARDS.filter(c=>c.priority);
+const EXTRA=CARDS.filter(c=>!c.priority);
+const STAGES=[
+  ["EN → RU matching","enru"],
+  ["Definition → term","def"],
+  ["RU → EN matching","ruen"],
+  ["Clinical choice","mcq"],
+  ["Clinical clue → term","typedclue"],
+  ["Final active recall","recall"]
+];
+
+const app=document.getElementById("app");
+const stageStat=document.getElementById("stageStat");
+const correctStat=document.getElementById("correctStat");
+const priorityStat=document.getElementById("priorityStat");
+const allStat=document.getElementById("allStat");
+const nav=document.getElementById("nav");
+
+let stage=0,correct=0;
+const mastered=new Set();
+const misses={};
+
+function shuffle(a){
+  const x=[...a];
+  for(let i=x.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [x[i],x[j]]=[x[j],x[i]];
+  }
+  return x;
+}
+function weightedStageSet(){
+  // Every stage includes all screenshot terms + a rotating subset of supplemental terms.
+  const extraCount=stage<3?4:6;
+  return [...PRIORITY,...shuffle(EXTRA).slice(0,extraCount)];
+}
+function updateStats(){
+  stageStat.textContent=(stage+1)+"/"+STAGES.length;
+  correctStat.textContent=correct;
+  priorityStat.textContent=PRIORITY.filter(c=>mastered.has(c.en)).length+"/"+PRIORITY.length;
+  allStat.textContent=mastered.size+"/"+CARDS.length;
+}
+function renderNav(){
+  nav.innerHTML="";
+  STAGES.forEach((s,i)=>{
+    const b=document.createElement("button");
+    b.type="button";
+    b.textContent=(i+1)+". "+s[0];
+    if(i===stage)b.classList.add("selected");
+    b.addEventListener("click",()=>{stage=i;render();});
+    nav.appendChild(b);
+  });
+}
+function nextButton(){
+  const b=document.createElement("button");
+  b.type="button"; b.className="primary"; b.style.marginTop="16px";
+  b.textContent=stage===STAGES.length-1?"Restart learning cycle":"Next stage";
+  b.addEventListener("click",()=>{stage=stage===STAGES.length-1?0:stage+1;render();});
+  return b;
+}
+function badge(c){
+  return c.priority ? '<span class="tag">screenshot priority</span>' : '';
+}
+
+function renderMatching(leftFn,rightFn,title){
+  const set=weightedStageSet();
+  app.innerHTML="<h2>"+title+"</h2><p class='sub'>Match "+set.length+" pairs. Screenshot vocabulary is included in full.</p>";
+  const grid=document.createElement("div");grid.className="grid";
+  const lc=document.createElement("div"),rc=document.createElement("div");lc.className=rc.className="col";
+  let L=null,R=null,done=0;
+  function mk(c,side,label){
+    const b=document.createElement("button");b.type="button";b.className="item";
+    if(c.priority)b.classList.add("priority");
+    b.textContent=label;b.dataset.en=c.en;
+    b.addEventListener("click",()=>{
+      if(b.disabled)return;
+      const prev=side==="L"?L:R;if(prev)prev.classList.remove("selected");
+      b.classList.add("selected");if(side==="L")L=b;else R=b;
+      if(L&&R){
+        const l=L,r=R;l.classList.remove("selected");r.classList.remove("selected");
+        if(l.dataset.en===r.dataset.en){
+          l.classList.add("correct");r.classList.add("correct");l.disabled=r.disabled=true;
+          correct++;mastered.add(l.dataset.en);done++;
+          if(done===set.length)app.appendChild(nextButton());
+        }else{
+          l.classList.add("wrong");r.classList.add("wrong");
+          misses[l.dataset.en]=(misses[l.dataset.en]||0)+1;
+          misses[r.dataset.en]=(misses[r.dataset.en]||0)+1;
+          setTimeout(()=>{l.classList.remove("wrong");r.classList.remove("wrong");},350);
+        }
+        L=R=null;updateStats();
+      }
+    });
+    return b;
+  }
+  shuffle(set).forEach(c=>lc.appendChild(mk(c,"L",leftFn(c))));
+  shuffle(set).forEach(c=>rc.appendChild(mk(c,"R",rightFn(c))));
+  grid.append(lc,rc);app.appendChild(grid);
+}
+
+function renderMCQ(){
+  const set=[...PRIORITY,...shuffle(EXTRA).slice(0,6)];
+  const order=shuffle([...PRIORITY,...PRIORITY.slice(0,6),...shuffle(EXTRA).slice(0,6)]);
+  let i=0;
+  function show(){
+    if(i>=order.length){app.innerHTML="<h2>Clinical choice</h2><p class='goodtext'>Stage complete.</p>";app.appendChild(nextButton());return;}
+    const c=order[i];
+    app.innerHTML="<h2>Clinical choice</h2><div class='prompt'>"+c.clue+badge(c)+"</div><div class='options' id='opts'></div><div class='status' id='msg'></div>";
+    const distract=shuffle(set.filter(x=>x.en!==c.en)).slice(0,3);
+    const opts=shuffle([c,...distract]);
+    const box=document.getElementById("opts"),msg=document.getElementById("msg");
+    opts.forEach(o=>{
+      const b=document.createElement("button");b.type="button";b.textContent=o.en;
+      b.addEventListener("click",()=>{
+        if(o.en===c.en){
+          b.classList.add("correct");correct++;mastered.add(c.en);updateStats();
+          msg.innerHTML="<span class='goodtext'>Correct.</span>";
+          setTimeout(()=>{i++;show();},350);
+        }else{
+          b.classList.add("wrong");misses[c.en]=(misses[c.en]||0)+1;
+          msg.innerHTML="<span class='badtext'>Try again.</span>";
+        }
+      });
+      box.appendChild(b);
+    });
+  }
+  show();
+}
+
+function renderTyped(finalRecall){
+  // Screenshot words are repeated twice; extras once.
+  const order=shuffle(finalRecall ? [...PRIORITY,...PRIORITY,...EXTRA] : [...PRIORITY,...PRIORITY.slice(0,8),...EXTRA]);
+  let i=0;
+  function show(){
+    if(i>=order.length){
+      app.innerHTML="<h2>"+(finalRecall?"Final active recall":"Clinical clue → term")+"</h2><p class='goodtext'>Stage complete.</p>";
+      const weak=CARDS.filter(c=>(misses[c.en]||0)>0);
+      if(weak.length){
+        const p=document.createElement("p");p.className="sub";
+        p.textContent="Review again: "+weak.map(c=>c.en).join(", ");
+        app.appendChild(p);
+      }
+      app.appendChild(nextButton());return;
+    }
+    const c=order[i];
+    const prompt=finalRecall?c.ru:c.clue;
+    app.innerHTML="<h2>"+(finalRecall?"Final active recall":"Clinical clue → term")+"</h2>"+
+      "<div class='prompt'>"+prompt+badge(c)+"</div>"+
+      "<div class='inputrow'><input id='answer' autocomplete='off' placeholder='Type the English term'>"+
+      "<button class='primary' id='check' type='button'>Check</button></div><div class='status' id='msg'></div>";
+    const inp=document.getElementById("answer"),msg=document.getElementById("msg");
+    function check(){
+      if(inp.value.trim().toLowerCase()===c.en.toLowerCase()){
+        correct++;mastered.add(c.en);updateStats();
+        msg.innerHTML="<span class='goodtext'>Correct.</span>";
+        setTimeout(()=>{i++;show();},300);
+      }else{
+        misses[c.en]=(misses[c.en]||0)+1;
+        msg.innerHTML="<span class='badtext'>Correct answer: <b>"+c.en+"</b></span>";
+      }
+    }
+    document.getElementById("check").addEventListener("click",check);
+    inp.addEventListener("keydown",e=>{if(e.key==="Enter")check();});
+    inp.focus();
+  }
+  show();
+}
+
+function render(){
+  renderNav();updateStats();
+  const mode=STAGES[stage][1];
+  if(mode==="enru")renderMatching(c=>c.en,c=>c.ru,"EN → RU matching");
+  else if(mode==="def")renderMatching(c=>c.def,c=>c.en,"Definition → English term");
+  else if(mode==="ruen")renderMatching(c=>c.ru,c=>c.en,"RU → EN matching");
+  else if(mode==="mcq")renderMCQ();
+  else if(mode==="typedclue")renderTyped(false);
+  else renderTyped(true);
+}
+render();
+</script>
+</body>
+</html>
